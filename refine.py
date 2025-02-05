@@ -38,13 +38,10 @@ def train_model(model, s_adj, t_adj, optimizer, config):
 
 
 # def candidate_choose(source_outputs, target_outputs, theta=0.99, delta_theta=0.2, max_neg_samples=4):
-#     # 逐层计算相似性矩阵并累加
 #     Sf = torch.zeros((len(source_outputs[0]), len(target_outputs[0])), dtype=torch.float32, device=source_outputs[0].device)
 #     for i in range(len(source_outputs)):
 #         S = torch.matmul(F.normalize(source_outputs[i]), F.normalize(target_outputs[i]).t())
 #         Sf += S
-#
-#     # 归一化相似性矩阵到0-1之间
 #     min_value = Sf.min(dim=1, keepdim=True).values
 #     max_value = Sf.max(dim=1, keepdim=True).values
 #     normalized_Sf = (Sf - min_value) / (max_value - min_value + 1e-8)  # 加一个小数防止除零
@@ -52,27 +49,19 @@ def train_model(model, s_adj, t_adj, optimizer, config):
 #     positive_pairs_f = []  # 存储正样本对 (i, j)
 #     negative_pairs_f = []  # 存储负样本对 (i, j)
 #
-#     # 使用布尔掩码选择正样本对和负样本对
 #     for i in range(normalized_Sf.shape[0]):
-#         # 获取当前行的相似性值
 #         row_similarities = normalized_Sf[i]
-#
-#         # 选择正样本对的索引
 #         positive_mask = row_similarities > theta
 #         positive_indices = torch.where(positive_mask)[0].tolist()
 #         row_positive_pairs = [(i, j) for j in positive_indices]
 #
-#         # 如果没有正样本对，则不为该节点选择负样本对
 #         if not row_positive_pairs:
 #             continue
 #
-#         # 选择负样本对的索引
 #         negative_mask = row_similarities < (theta - delta_theta)
 #         negative_indices = torch.where(negative_mask)[0].tolist()
-#         # 限制负样本对的数量
 #         row_negative_pairs = [(i, j) for j in negative_indices[:max_neg_samples]]
 #
-#         # 将找到的正样本对和负样本对添加到总列表中
 #         positive_pairs_f.extend(row_positive_pairs)
 #         negative_pairs_f.extend(row_negative_pairs)
 #
@@ -89,35 +78,26 @@ def compute_contrastive_loss(source_outputs, target_outputs, positive_pairs, neg
     :param margin: Margin 参数，推远负样本对的距离
     :return: 计算出的平均对比损失
     """
-    # 获取最后一层的嵌入
     source_embeddings = source_outputs[-1]
     target_embeddings = target_outputs[-1]
     total_loss = torch.tensor(0.0, device=source_embeddings.device, requires_grad=True)
 
-    # 计算正样本对的损失
     for src_idx, tgt_idx in positive_pairs:
-        # 计算正样本对的距离
         pos_distance = torch.norm(source_embeddings[src_idx] - target_embeddings[tgt_idx], p=2)
-        total_loss = total_loss + pos_distance ** 2  # 正样本的距离越小越好
-
-    # 计算负样本对的损失
+        total_loss = total_loss + pos_distance ** 2  
+        
     for src_idx, tgt_idx in negative_pairs:
-        # 计算负样本对的距离
         neg_distance = torch.norm(source_embeddings[src_idx] - target_embeddings[tgt_idx], p=2)
-        # 对于负样本，我们希望它们的距离大于 margin
         total_loss = total_loss + torch.clamp(margin - neg_distance, min=0) ** 2  # 负样本的距离越大越好
-
-    # 计算平均损失
     num_pairs = len(positive_pairs) + len(negative_pairs)
     average_loss = total_loss / num_pairs if num_pairs > 0 else torch.tensor(0.0, device=source_embeddings.device, requires_grad=True)
     return average_loss
 
 
 def candidate_choose(source_outputs, target_outputs, theta=0.992, delta_theta=0.2, max_neg_samples=5):
-    # 逐层计算余弦相似性矩阵并累加
     Sf = torch.zeros((len(source_outputs[0]), len(target_outputs[0])), dtype=torch.float32,
                      device=source_outputs[0].device)
-    num_layers = len(source_outputs)  # 获取层数
+    num_layers = len(source_outputs)
 
     for i in range(num_layers):
         S = torch.matmul(F.normalize(source_outputs[i]), F.normalize(target_outputs[i]).t())
@@ -125,8 +105,8 @@ def candidate_choose(source_outputs, target_outputs, theta=0.992, delta_theta=0.
 
     Sf /= num_layers
     normalized_Sf = Sf
-    positive_pairs_f = []  # 存储正样本对 (i, j)
-    negative_pairs_f = []  # 存储负样本对 (i, j)
+    positive_pairs_f = [] 
+    negative_pairs_f = []  
 
     for i in range(normalized_Sf.shape[0]):
         row_similarities = normalized_Sf[i]
@@ -144,15 +124,7 @@ def candidate_choose(source_outputs, target_outputs, theta=0.992, delta_theta=0.
 
 
 def create_negative_pairs_dict(negative_pairs):
-    """
-    创建负样本对字典，按源节点索引分组。
-
-    :param negative_pairs: 负样本对列表，包含（源节点，目标节点）对
-    :return: 负样本对字典，键是源节点索引，值是对应的目标节点索引列表
-    """
     negative_pairs_dict = {}
-
-    # 遍历所有负样本对
     for src_idx, tgt_idx in negative_pairs:
         if src_idx not in negative_pairs_dict:
             negative_pairs_dict[src_idx] = []
@@ -170,13 +142,11 @@ def compute_infoNCE_loss(source_outputs, target_outputs, positive_pairs, negativ
     :param temperature: 温度参数，控制softmax的平滑度
     :return: 计算出的平均InfoNCE损失
     """
-    # 获取最后一层的嵌入
     source_embeddings = source_outputs[-1]
     target_embeddings = target_outputs[-1]
 
     total_loss = 0.0
 
-    # 遍历每个正样本对并计算 InfoNCE 损失
     for src_idx, tgt_idx in positive_pairs:
         pos_similarity = F.cosine_similarity(source_embeddings[src_idx], target_embeddings[tgt_idx],
                                              dim=0) / temperature
@@ -344,6 +314,7 @@ def add_edges_based_on_candidates(source_A_hat, target_A_hat, seed_list1, seed_l
                 tgt_j = seed_dict_source_to_target[src_j]
 
                 if target_A_hat[tgt_i, tgt_j] == 0:
+                    #search the candidates and compute the neiborhood consistency
                     src_neighbors_union = get_neighbors(source_A_hat, src_i) | get_neighbors(source_A_hat, src_j)
                     tgt_neighbors_union = {seed_dict_source_to_target.get(n) for n in src_neighbors_union if n in seed_dict_source_to_target}
                     tgt_neighbors_target = get_neighbors(target_A_hat, tgt_i) | get_neighbors(target_A_hat, tgt_j)
