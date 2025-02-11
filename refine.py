@@ -27,16 +27,6 @@ def train_model(model, s_adj, t_adj, optimizer, config):
         optimizer.step()
     print("Training completed.")
 
-    # for epoch in range(config.train_epochs):
-    #     optimizer.zero_grad()
-    #     source_outputs = model(s_adj, 's')
-    #     target_outputs = model(t_adj, 't')
-    #     loss = compute_contrastive_loss(source_outputs, target_outputs, positive_pairs, negative_pairs, 1)
-    #     loss.backward()
-    #     optimizer.step()
-    #     print(f"Epoch {epoch+1}: Loss={loss.item()}")
-
-
 # def candidate_choose(source_outputs, target_outputs, theta=0.99, delta_theta=0.2, max_neg_samples=4):
 #     Sf = torch.zeros((len(source_outputs[0]), len(target_outputs[0])), dtype=torch.float32, device=source_outputs[0].device)
 #     for i in range(len(source_outputs)):
@@ -70,7 +60,6 @@ def train_model(model, s_adj, t_adj, optimizer, config):
 def compute_contrastive_loss(source_outputs, target_outputs, positive_pairs, negative_pairs, margin=1):
     """
     使用对比损失（Contrastive Loss）计算正负样本对的距离。
-
     :param source_outputs: 源图的所有层嵌入输出，列表形式
     :param target_outputs: 目标图的所有层嵌入输出，列表形式
     :param positive_pairs: 正样本对列表，包含（源节点，目标节点）对
@@ -131,6 +120,7 @@ def create_negative_pairs_dict(negative_pairs):
         negative_pairs_dict[src_idx].append(tgt_idx)
 
     return negative_pairs_dict
+
 
 def compute_infoNCE_loss(source_outputs, target_outputs, positive_pairs, negative_pairs_dict, temperature=0.07):
     """
@@ -286,6 +276,7 @@ def refine_alignment(model, s_sadj, t_sadj, args, s_sadj_ori, t_sadj_ori):
 def get_neighbors(adj_matrix, node):
     return set(torch.nonzero(adj_matrix[node]).view(-1).tolist())
 
+
 def add_edges_based_on_candidates(source_A_hat, target_A_hat, seed_list1, seed_list2, s_edges_list, t_edges_list):
     """
     根据 seed_list1 和 seed_list2 中的种子节点对直接在 source_A_hat 和 target_A_hat 中添加边，
@@ -297,7 +288,7 @@ def add_edges_based_on_candidates(source_A_hat, target_A_hat, seed_list1, seed_l
     :param seed_list2: 目标图中的种子节点列表
     :param s_edges_list: 源图中的边列表，每一项为 (src_i, src_j) 的元组
     :param t_edges_list: 目标图中的边列表，每一项为 (tgt_i, tgt_j) 的元组
-    :param threshold_u: 补边的 Jaccard 相似度阈值
+    :param threshold_u: 补边的边一致性阈值
     :return: 原始邻接矩阵（含补齐边）、归一化后的邻接矩阵、新边添加到边列表、补齐边数量
     """
     added_edges_source = 0
@@ -352,6 +343,7 @@ def add_edges_based_on_candidates(source_A_hat, target_A_hat, seed_list1, seed_l
     target_A_hat_norm = torch.tensor(target_A_hat_norm, dtype=torch.float32)
 
     return source_A_hat, target_A_hat, source_A_hat_norm, target_A_hat_norm, added_edges_source, added_edges_target
+
 
 def refine(model, source_A_hat, target_A_hat, threshold, args, s_sadj_ori, t_sadj_ori):
     refinement_model = StableFactor(len(source_A_hat), len(target_A_hat), False)
@@ -425,6 +417,7 @@ def refine(model, source_A_hat, target_A_hat, threshold, args, s_sadj_ori, t_sad
 
     return S_max, full_dic
 
+
 def get_acc(source_outputs, target_outputs, test_dict=None, alphas=None, just_S=False):
     global acc, MAP, top1, top10
     Sf = np.zeros((len(source_outputs[0]), len(target_outputs[0])))
@@ -474,11 +467,6 @@ def compute_accuracy(pred, gt):
         for i in range(pred.shape[0]):
             if pred[i].sum() > 0 and np.array_equal(pred[i], gt[i]):
                 matched_pairs.append((i, np.argmax(gt[i])))
-
-    # 保存匹配对到文件
-    # with open('./data/res/matched_pairs_01.txt', 'w') as file:
-    #     for pair in matched_pairs:
-    #         file.write(f"{pair[0]} {pair[1]}\n")
     accuracy = len(matched_pairs) / len(gt) if type(gt) == dict else len(matched_pairs) / (gt == 1).sum()
     return accuracy
 
