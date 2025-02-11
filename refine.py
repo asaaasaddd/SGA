@@ -83,7 +83,7 @@ def compute_contrastive_loss(source_outputs, target_outputs, positive_pairs, neg
     return average_loss
 
 
-def candidate_choose(source_outputs, target_outputs, theta=0.992, delta_theta=0.2, max_neg_samples=5):
+def candidate_choose(source_outputs, target_outputs, theta=0.99, delta_theta=0.2, max_neg_samples=5):
     Sf = torch.zeros((len(source_outputs[0]), len(target_outputs[0])), dtype=torch.float32,
                      device=source_outputs[0].device)
     num_layers = len(source_outputs)
