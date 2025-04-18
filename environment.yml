@@ -190,4 +190,3 @@ dependencies:
       - tqdm==4.66.1
       - traitlets==5.9.0
       - wcwidth==0.2.13
-prefix: /home/wclin/anaconda3/envs/py3.7
