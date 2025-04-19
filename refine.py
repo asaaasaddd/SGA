@@ -273,7 +273,7 @@ def refine_alignment(model, s_sadj, t_sadj, args, s_sadj_ori, t_sadj_ori):
 #
 #     return source_A_hat, target_A_hat, source_A_hat_norm, target_A_hat_norm, added_edges_source, added_edges_target
 
-def get_neighbors(adj_matrix, node):
+def get_neighbors_edges(adj_matrix, node):
     return set(torch.nonzero(adj_matrix[node]).view(-1).tolist())
 
 
@@ -306,9 +306,9 @@ def add_edges_based_on_candidates(source_A_hat, target_A_hat, seed_list1, seed_l
 
                 if target_A_hat[tgt_i, tgt_j] == 0:
                     #search the candidates and compute the neiborhood consistency
-                    src_neighbors_edges_union = get_neighbors(source_A_hat, src_i) | get_neighbors(source_A_hat, src_j)
+                    src_neighbors_edges_union = get_neighbors_edges(source_A_hat, src_i) | get_neighbors_edges(source_A_hat, src_j)
                     tgt_neighbors_edges_union = {seed_dict_source_to_target.get(n) for n in src_neighbors_edges_union if n in seed_dict_source_to_target}
-                    tgt_neighbors_target = get_neighbors(target_A_hat, tgt_i) | get_neighbors(target_A_hat, tgt_j)
+                    tgt_neighbors_target = get_neighbors_edges(target_A_hat, tgt_i) | get_neighbors_edges(target_A_hat, tgt_j)
                     consistent_edges = len(tgt_neighbors_edges_union & tgt_neighbors_target)
                     max_edges = len(tgt_neighbors_edges_union | tgt_neighbors_target)
                     neiborhood_consistency = consistent_edges / max_edges if max_edges != 0 else 0
@@ -324,9 +324,9 @@ def add_edges_based_on_candidates(source_A_hat, target_A_hat, seed_list1, seed_l
                 src_i = seed_dict_target_to_source[tgt_i]
                 src_j = seed_dict_target_to_source[tgt_j]
                 if source_A_hat[src_i, src_j] == 0:
-                    tgt_neighbors_edges_union = get_neighbors(target_A_hat, tgt_i) | get_neighbors(target_A_hat, tgt_j)
+                    tgt_neighbors_edges_union = get_neighbors_edges(target_A_hat, tgt_i) | get_neighbors_edges(target_A_hat, tgt_j)
                     src_neighbors_edges_union = {seed_dict_target_to_source.get(n) for n in tgt_neighbors_edges_union if n in seed_dict_target_to_source}
-                    src_neighbors_source = get_neighbors(source_A_hat, src_i) | get_neighbors(source_A_hat, src_j)
+                    src_neighbors_source = get_neighbors_edges(source_A_hat, src_i) | get_neighbors_edges(source_A_hat, src_j)
                     consistent_edges = len(src_neighbors_edges_union & src_neighbors_source)
                     max_edges = len(src_neighbors_edges_union | src_neighbors_source)
                     neiborhood_consistency = consistent_edges / max_edges if max_edges != 0 else 0
