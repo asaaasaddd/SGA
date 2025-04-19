@@ -172,9 +172,9 @@ def refine_alignment(model, s_sadj, t_sadj, args, s_sadj_ori, t_sadj_ori):
     t_sadj = t_sadj.to_dense()
     s_sadj_ori = s_sadj_ori.to_dense()
     t_sadj_ori = t_sadj_ori.to_dense()
-    CloAlign_S, groundtruth = refine(model, s_sadj, t_sadj, args.theta, args, s_sadj_ori, t_sadj_ori)
+    SGA_S, groundtruth = refine(model, s_sadj, t_sadj, args.theta, args, s_sadj_ori, t_sadj_ori)
 
-    return CloAlign_S, groundtruth
+    return SGA_S, groundtruth
 
 # def add_edges_based_on_candidates(source_A_hat, target_A_hat, seed_list1, seed_list2, s_edges_list, t_edges_list):
 #     """
