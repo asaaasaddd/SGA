@@ -6,8 +6,10 @@ SGA: Self-boosting Attributed Graph Alignment via Neighborhood Consistency-based
 The relevant experimental settings have been provided in the *config* folder.
 
 ## Cite
+
 If you find our work useful in your research, please consider citing:
 
+```bibtex
 @inproceedings{wang2026sga,
   title     = {SGA: Self-boosting Attributed Graph Alignment via Neighborhood Consistency-based Edge Enhancement},
   author    = {Wang, Chenxu and Lin, Wencong and Wang, Pinghui and Qin, Tao and Wang, Wei and Guan, Xiaohong},
